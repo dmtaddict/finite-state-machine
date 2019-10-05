@@ -6,7 +6,7 @@ class FSM {
 
     constructor(config) {
         this.activeState = config.initial;
-        this.states = [];
+        this.states = Array();
         this.states = config.states;
         this.stateHistory = [];
         this.stateHistory.push(this.activeState);
@@ -29,13 +29,14 @@ class FSM {
         try {
             if (this.states[state]) {
                 this.activeState = state;
-                this.stateHistory.push(state);
+                if(this.activeState !== this.stateHistory[this.stateHistory.length-1]) {
+                    this.stateHistory.push(state);
+                }
             }
             else {
                 throw new SyntaxError("Incorrect state");
             }
         }
-
         catch(e){
             throw e;
         }
@@ -63,15 +64,18 @@ class FSM {
      * @returns {Array}
      */
     getStates(event) {
-        if(event){
-            return this.states[this.activeState].transitions[event];
+        if(event) {
+            let states = [];
+            for(let prop in this.states) {
+                if (this.states[prop]['transitions'][event]) {
+                    states.push(prop);
+                }
+            }
+
+            return states;
         }
         else{
-            let States = Array(this.states.length);
-            for (let i = 0; i< this.states.length; i++){
-                States[i] = this.states[i];
-            }
-            return States;
+            return Object.keys(this.states);
         }
     }
 
@@ -81,8 +85,11 @@ class FSM {
      * @returns {Boolean}
      */
     undo() {
-        if(this.stateHistory.length > 1){
-            this.activeState = this.stateHistory[this.stateHistory - 2];
+        if(this.stateHistory.length > 1 && this.activeState !== this.stateHistory[0]){
+            this.activeState = this.stateHistory[this.stateHistory.length - 2];
+            this.changeState(this.activeState);
+            this.stateHistory.pop();
+            return true;
         }
         else {
             return false;
@@ -95,8 +102,9 @@ class FSM {
      * @returns {Boolean}
      */
     redo() {
-        if(this.activeState !== this.stateHistory[this.stateHistory.length-1]){
-            this.activeState = this.stateHistory[this.stateHistory - 1];
+        if(this.activeState !== this.stateHistory[this.stateHistory.length - 1] && this.stateHistory.length !== 1){
+            this.activeState = this.stateHistory[this.stateHistory.length - 1];
+            return true;
         }
         else {
             return false;
